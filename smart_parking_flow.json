@@ -1,0 +1,310 @@
+[
+    {
+        "id": "tab_smart_parking",
+        "type": "tab",
+        "label": "Smart Parking",
+        "disabled": false,
+        "info": "Smart Parking IoT Dashboard\n"
+    },
+    {
+        "id": "mqtt_broker_local",
+        "type": "mqtt-broker",
+        "name": "Local_Mosquitto",
+        "broker": "localhost",
+        "port": "1883",
+        "clientid": "NodeRED_Dashboard",
+        "autoConnect": true,
+        "usr": "",
+        "pwd": "",
+        "compatmode": false,
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "ui_group_dashboard",
+        "type": "ui_group",
+        "name": "Parking Intelligent (Vue globale)",
+        "tab": "ui_tab_parking",
+        "order": 1,
+        "disp": true,
+        "width": "18",
+        "collapse": false
+    },
+    {
+        "id": "ui_group_stats",
+        "type": "ui_group",
+        "name": "Statistiques et Alertes",
+        "tab": "ui_tab_parking",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false
+    },
+    {
+        "id": "ui_tab_parking",
+        "type": "ui_tab",
+        "name": "Smart Parking",
+        "icon": "dashboard",
+        "order": 1,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "mqtt_in_slots",
+        "type": "mqtt in",
+        "z": "tab_smart_parking",
+        "name": "MQTT : Places (P1-P10)",
+        "topic": "parking/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "mqtt_broker_local",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 140,
+        "wires": [
+            [
+                "ui_template_svg",
+                "function_logs"
+            ]
+        ]
+    },
+    {
+        "id": "mqtt_in_available",
+        "type": "mqtt in",
+        "z": "tab_smart_parking",
+        "name": "MQTT : Disponibilité",
+        "topic": "parking/available",
+        "qos": "0",
+        "datatype": "auto",
+        "broker": "mqtt_broker_local",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 130,
+        "y": 300,
+        "wires": [
+            [
+                "ui_gauge_avail",
+                "switch_full",
+                "ui_chart_avail"
+            ]
+        ]
+    },
+    {
+        "id": "ui_template_svg",
+        "type": "ui_template",
+        "z": "tab_smart_parking",
+        "group": "ui_group_dashboard",
+        "name": "SVG Interactive Parking",
+        "order": 1,
+        "width": "18",
+        "height": "10",
+        "format": "<script>\n    (function(scope) {\n        // Réception en temps réel des messages MQTT via ui_template\n        scope.$watch('msg', function(msg) {\n            if (msg && msg.topic && msg.payload) {\n                var parts = msg.topic.split('/');\n                if (parts[1] && parts[1].startsWith('P')) {\n                    var slotId = parts[1]; // P1, P2... P10\n                    var state = msg.payload.state;\n                    \n                    // Mise à jour de la couleur via le DOM SVG\n                    var el = document.getElementById(slotId);\n                    if (el) {\n                        if(state === 'free') {\n                            el.style.fill = '#2ecc71'; // Vert libéré\n                        } else {\n                            el.style.fill = '#e74c3c'; // Rouge occupé\n                        }\n                    }\n                }\n            }\n        });\n    })(scope);\n</script>\n<style>\n    .svg-container {\n        width: 100%;\n        height: 100%;\n        background: linear-gradient(135deg, #1f2a36 0%, #2c3e50 100%);\n        border-radius: 12px;\n        display: flex;\n        justify-content: center;\n        align-items: center;\n        box-shadow: inset 0px 0px 20px rgba(0,0,0,0.5);\n    }\n    .parking-slot { \n        fill: #2ecc71; \n        stroke: #95a5a6; \n        stroke-width: 3; \n        rx: 10;\n        transition: fill 0.5s ease-in-out; \n    }\n    .parking-text {\n        fill: #ffffff;\n        font-family: 'Inter', 'Segoe UI', sans-serif;\n        font-weight: 700;\n        font-size: 26px;\n        pointer-events: none;\n    }\n    .parking-road { \n        fill: #34495e; \n        rx: 5; \n    }\n    .line-dashed { \n        fill: none; \n        stroke: #ecf0f1; \n        stroke-width: 6; \n        stroke-dasharray: 20,20; \n    }\n</style>\n\n<div class=\"svg-container\">\n    <svg width=\"100%\" height=\"100%\" viewBox=\"0 0 900 450\" preserveAspectRatio=\"xMidYMid meet\">\n        <!-- Arrière plan route -->\n        <rect class=\"parking-road\" x=\"30\" y=\"180\" width=\"840\" height=\"90\" />\n        <line x1=\"50\" y1=\"225\" x2=\"850\" y2=\"225\" class=\"line-dashed\" />\n\n        <!-- Ligne du haut (P1 à P5) -->\n        <rect id=\"P1\" class=\"parking-slot\" x=\"60\" y=\"30\" width=\"120\" height=\"150\" />\n        <text x=\"120\" y=\"110\" text-anchor=\"middle\" class=\"parking-text\">P1</text>\n        \n        <rect id=\"P2\" class=\"parking-slot\" x=\"220\" y=\"30\" width=\"120\" height=\"150\" />\n        <text x=\"280\" y=\"110\" text-anchor=\"middle\" class=\"parking-text\">P2</text>\n        \n        <rect id=\"P3\" class=\"parking-slot\" x=\"380\" y=\"30\" width=\"120\" height=\"150\" />\n        <text x=\"440\" y=\"110\" text-anchor=\"middle\" class=\"parking-text\">P3</text>\n        \n        <rect id=\"P4\" class=\"parking-slot\" x=\"540\" y=\"30\" width=\"120\" height=\"150\" />\n        <text x=\"600\" y=\"110\" text-anchor=\"middle\" class=\"parking-text\">P4</text>\n        \n        <rect id=\"P5\" class=\"parking-slot\" x=\"700\" y=\"30\" width=\"120\" height=\"150\" />\n        <text x=\"760\" y=\"110\" text-anchor=\"middle\" class=\"parking-text\">P5</text>\n\n        <!-- Ligne du bas (P6 à P10) -->\n        <rect id=\"P6\" class=\"parking-slot\" x=\"60\" y=\"270\" width=\"120\" height=\"150\" />\n        <text x=\"120\" y=\"350\" text-anchor=\"middle\" class=\"parking-text\">P6</text>\n        \n        <rect id=\"P7\" class=\"parking-slot\" x=\"220\" y=\"270\" width=\"120\" height=\"150\" />\n        <text x=\"280\" y=\"350\" text-anchor=\"middle\" class=\"parking-text\">P7</text>\n        \n        <rect id=\"P8\" class=\"parking-slot\" x=\"380\" y=\"270\" width=\"120\" height=\"150\" />\n        <text x=\"440\" y=\"350\" text-anchor=\"middle\" class=\"parking-text\">P8</text>\n        \n        <rect id=\"P9\" class=\"parking-slot\" x=\"540\" y=\"270\" width=\"120\" height=\"150\" />\n        <text x=\"600\" y=\"350\" text-anchor=\"middle\" class=\"parking-text\">P9</text>\n        \n        <rect id=\"P10\" class=\"parking-slot\" x=\"700\" y=\"270\" width=\"120\" height=\"150\" />\n        <text x=\"760\" y=\"350\" text-anchor=\"middle\" class=\"parking-text\">P10</text>\n    </svg>\n</div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resizes": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 420,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ui_gauge_avail",
+        "type": "ui_gauge",
+        "z": "tab_smart_parking",
+        "name": "Jauge Disponibilité",
+        "group": "ui_group_stats",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "gtype": "gage",
+        "title": "Places Libres",
+        "label": "/ 10",
+        "format": "{{value}}",
+        "min": 0,
+        "max": 10,
+        "colors": [
+            "#e74c3c",
+            "#f1c40f",
+            "#2ecc71"
+        ],
+        "seg1": "2",
+        "seg2": "7",
+        "className": "",
+        "x": 410,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "switch_full",
+        "type": "switch",
+        "z": "tab_smart_parking",
+        "name": "Si parking plein (0)",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 1,
+        "x": 390,
+        "y": 320,
+        "wires": [
+            [
+                "change_alert_message"
+            ]
+        ]
+    },
+    {
+        "id": "change_alert_message",
+        "type": "change",
+        "z": "tab_smart_parking",
+        "name": "Message d'Alerte",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "🚨 ATTENTION : Parking Complet !",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 610,
+        "y": 320,
+        "wires": [
+            [
+                "ui_toast_full"
+            ]
+        ]
+    },
+    {
+        "id": "ui_toast_full",
+        "type": "ui_toast",
+        "z": "tab_smart_parking",
+        "position": "top right",
+        "displayTime": "5",
+        "highlight": "#e74c3c",
+        "sendall": true,
+        "outputs": 0,
+        "ok": "OK",
+        "cancel": "",
+        "raw": false,
+        "className": "",
+        "topic": "Alerte de Capacité",
+        "name": "Toast Alert",
+        "x": 810,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "ui_chart_avail",
+        "type": "ui_chart",
+        "z": "tab_smart_parking",
+        "name": "Historique de capacité",
+        "group": "ui_group_stats",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "label": "Tendance des places libres",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "step",
+        "nodata": "En attente des données MQTT...",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "10",
+        "removeOlder": 1,
+        "removeOlderPoints": "",
+        "removeOlderUnit": "3600",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#3498db",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 420,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "function_logs",
+        "type": "function",
+        "z": "tab_smart_parking",
+        "name": "Formatage des Logs",
+        "func": "if (msg.topic === 'parking/available') return null;\nvar slotId = msg.topic.split('/')[1];\nvar isFree = msg.payload.state === 'free';\n\n// Génération d'une phrase colorée pour le log\nmsg.payload = (isFree ? '🟢' : '🔴') + ' ' + slotId + (isFree ? ' est maintenant LIBRE' : ' a été OCCUPÉE');\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 160,
+        "wires": [
+            [
+                "ui_text_logs"
+            ]
+        ]
+    },
+    {
+        "id": "ui_text_logs",
+        "type": "ui_text",
+        "z": "tab_smart_parking",
+        "group": "ui_group_stats",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "Dernier Statut",
+        "label": "Événement :",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 620,
+        "y": 160,
+        "wires": []
+    }
+]
