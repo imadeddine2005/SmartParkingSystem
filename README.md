@@ -65,7 +65,7 @@ L'interface utilisateur est une **visualisation SVG interactive d'un parking**, 
 
 Le flux Node-RED est organisé en **4 traitements principaux** :
 
-1. **📥 Réception MQTT** — Node-RED s'abonne au topic `parking/#` et reçoit chaque événement instantanément dès qu'une place change d'état.
+1. **📥 Réception MQTT** — Node-RED s'abonne au topic `parking/#` et reçoit chaque événement instantanément dès qu'une place change d'état a cause du script pythone qui mettre ajours les etats a chaque 5s.
 
 2. **🗺️ Interface SVG Dynamique** — Un nœud `ui_template` met à jour en temps réel le dessin SVG du parking : les voitures apparaissent/disparaissent avec une animation fluide et les LED changent de couleur (🟢 Libre / 🔴 Occupée).
 
